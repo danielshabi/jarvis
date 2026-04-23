@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>J.A.R.V.I.S</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:#020c1b;}
+
+/* ── BOOT SCREEN ── */
+#boot{
+  position:fixed;inset:0;z-index:9999;
+  background:#020c1b;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;
+  transition:opacity 0.8s ease;
+}
+.boot-logo{
+  font-family:'Orbitron',sans-serif;font-size:52px;font-weight:900;
+  color:transparent;
+  background:linear-gradient(135deg,#38bdf8,#0ea5e9,#60efff,#38bdf8);
+  background-size:200% 200%;
+  -webkit-background-clip:text;background-clip:text;
+  letter-spacing:0.4em;
+  animation:logoShimmer 2s ease infinite, logoFadeIn 0.8s ease forwards;
+  text-shadow:none;
+  filter:drop-shadow(0 0 30px rgba(56,189,248,0.5));
+}
+.boot-sub{
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  color:rgba(56,189,248,0.6);letter-spacing:0.3em;
+  animation:fadeSlideUp 0.6s ease 0.3s both;
+}
+.boot-bar-wrap{
+  width:320px;height:2px;background:rgba(56,189,248,0.1);
+  border-radius:2px;overflow:hidden;
+  animation:fadeSlideUp 0.6s ease 0.5s both;
+}
+.boot-bar{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,#0ea5e9,#60efff);
+  border-radius:2px;
+  transition:width 0.05s linear;
+  box-shadow:0 0 12px rgba(96,239,255,0.8);
+}
+.boot-status{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:rgba(56,189,248,0.45);letter-spacing:0.15em;height:14px;
+  animation:fadeSlideUp 0.6s ease 0.7s both;
+}
+.boot-music-note{
+  font-size:11px;color:rgba(56,189,248,0.35);
+  font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;
+  animation:fadeSlideUp 0.6s ease 0.9s both;
+}
+
+/* ── MAIN APP ── */
+#app{
+  height:100vh;display:flex;flex-direction:column;
+  background:linear-gradient(135deg,#040f1e 0%,#061524 30%,#071a2e 60%,#040d1a 100%);
+  position:relative;overflow:hidden;
+  font-family:'Share Tech Mono',monospace;
+  opacity:0;transition:opacity 1s ease;
+}
+#app.visible{opacity:1;}
+
+/* Animated mesh background */
+#bgCanvas{position:absolute;inset:0;pointer-events:none;z-index:0;}
+
+/* Scanlines */
+#app::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(56,189,248,0.018) 2px,rgba(56,189,248,0.018) 4px);
+  pointer-events:none;z-index:1;animation:scanMove 8s linear infinite;
+}
+
+/* Corner brackets */
+.hc{position:absolute;width:32px;height:32px;z-index:20;}
+.hc.tl{top:10px;left:10px;border-top:2px solid rgba(56,189,248,0.6);border-left:2px solid rgba(56,189,248,0.6);}
+.hc.tr{top:10px;right:10px;border-top:2px solid rgba(56,189,248,0.6);border-right:2px solid rgba(56,189,248,0.6);}
+.hc.bl{bottom:10px;left:10px;border-bottom:2px solid rgba(56,189,248,0.6);border-left:2px solid rgba(56,189,248,0.6);}
+.hc.br{bottom:10px;right:10px;border-bottom:2px solid rgba(56,189,248,0.6);border-right:2px solid rgba(56,189,248,0.6);}
+
+/* KEY BANNER */
+#key-banner{
+  position:relative;z-index:30;
+  background:rgba(14,165,233,0.08);
+  border-bottom:1px solid rgba(56,189,248,0.15);
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  padding:7px 20px;backdrop-filter:blur(10px);flex-shrink:0;
+}
+#key-banner .kb-label{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:0.2em;color:rgba(56,189,248,0.5);}
+#key-banner input{
+  padding:5px 12px;background:rgba(255,255,255,0.05);
+  border:1px solid rgba(56,189,248,0.2);color:#7dd3fc;
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  outline:none;border-radius:6px;width:300px;letter-spacing:0.04em;
+  transition:border-color 0.2s;
+}
+#key-banner input:focus{border-color:rgba(56,189,248,0.5);background:rgba(255,255,255,0.08);}
+#key-banner input::placeholder{color:rgba(56,189,248,0.25);}
+#key-banner .kb-btn{
+  padding:5px 14px;background:rgba(14,165,233,0.2);
+  border:1px solid rgba(56,189,248,0.35);color:#38bdf8;
+  font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:0.15em;
+  cursor:pointer;border-radius:6px;transition:all 0.2s;
+}
+#key-banner .kb-btn:hover{background:rgba(14,165,233,0.35);border-color:#38bdf8;}
+#key-banner .kb-x{background:none;border:none;color:rgba(56,189,248,0.3);font-size:16px;cursor:pointer;padding:0 4px;transition:color 0.2s;}
+#key-banner .kb-x:hover{color:rgba(56,189,248,0.6);}
+#music-btn{
+  padding:5px 12px;background:rgba(255,255,255,0.04);
+  border:1px solid rgba(56,189,248,0.15);color:rgba(56,189,248,0.5);
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  cursor:pointer;border-radius:6px;transition:all 0.2s;margin-left:8px;
+}
+#music-btn:hover{background:rgba(14,165,233,0.1);color:#38bdf8;}
+
+/* TOP BAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 32px;
+  background:rgba(255,255,255,0.025);
+  border-bottom:1px solid rgba(56,189,248,0.1);
+  backdrop-filter:blur(12px);
+  z-index:15;position:relative;flex-shrink:0;
+}
+.tb-logo{
+  font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;
+  color:transparent;
+  background:linear-gradient(135deg,#38bdf8,#60efff);
+  -webkit-background-clip:text;background-clip:text;
+  letter-spacing:0.35em;
+  filter:drop-shadow(0 0 12px rgba(56,189,248,0.4));
+}
+.tb-clock{
+  font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;
+  color:#38bdf8;letter-spacing:0.12em;
+  text-shadow:0 0 20px rgba(56,189,248,0.5);
+}
+.tb-stats{display:flex;gap:28px;}
+.tb-stat{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.tb-stat-lbl{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:0.2em;color:rgba(56,189,248,0.35);}
+.tb-stat-val{font-family:'Orbitron',sans-serif;font-size:11px;color:#7dd3fc;font-weight:500;}
+
+/* MAIN ROW */
+.main-row{flex:1;display:flex;min-height:0;z-index:10;position:relative;}
+
+/* SIDE COLUMNS */
+.side-col{
+  width:270px;flex-shrink:0;display:flex;flex-direction:column;
+  background:rgba(255,255,255,0.018);
+  backdrop-filter:blur(16px);
+}
+.side-col.left{border-right:1px solid rgba(56,189,248,0.08);}
+.side-col.right{border-left:1px solid rgba(56,189,248,0.08);}
+
+/* Panels */
+.panel{
+  padding:14px 16px;
+  border-bottom:1px solid rgba(56,189,248,0.07);
+}
+.panel-title{
+  font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:0.25em;
+  color:rgba(56,189,248,0.4);margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.panel-title::before{content:'';width:16px;height:1px;background:rgba(56,189,248,0.3);}
+.panel-title::after{content:'';flex:1;height:1px;background:rgba(56,189,248,0.1);}
+
+/* Stock cards */
+.stock-card{
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(56,189,248,0.1);
+  border-radius:10px;padding:10px 12px;margin-bottom:8px;
+  transition:all 0.3s ease;position:relative;overflow:hidden;
+}
+.stock-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(56,189,248,0.3),transparent);
+}
+.stock-card:hover{
+  background:rgba(56,189,248,0.06);
+  border-color:rgba(56,189,248,0.25);
+  transform:translateY(-1px);
+  box-shadow:0 4px 20px rgba(14,165,233,0.1);
+}
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.sc-sym{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#7dd3fc;}
+.sc-price{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#e0f2fe;}
+.sc-mid{display:flex;justify-content:space-between;align-items:center;margin-top:4px;}
+.sc-chg{font-size:9px;font-family:'Share Tech Mono',monospace;padding:2px 6px;border-radius:4px;}
+.sc-chg.up{color:#34d399;background:rgba(52,211,153,0.1);}
+.sc-chg.down{color:#f87171;background:rgba(248,113,113,0.1);}
+.sc-pred{font-size:8px;color:rgba(56,189,248,0.45);font-family:'Share Tech Mono',monospace;}
+.mini-chart{width:100%;height:30px;margin-top:6px;}
+
+/* Weather */
+.wx-card{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(56,189,248,0.1);
+  border-radius:10px;padding:12px 14px;position:relative;overflow:hidden;
+}
+.wx-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(56,189,248,0.3),transparent);
+}
+.wx-main{display:flex;justify-content:space-between;align-items:center;}
+.wx-temp{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:700;color:#38bdf8;line-height:1;}
+.wx-loc{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:0.15em;color:rgba(56,189,248,0.4);margin-top:2px;}
+.wx-desc{font-size:9px;color:rgba(56,189,248,0.6);letter-spacing:0.08em;margin-top:2px;}
+.wx-icon{font-size:32px;opacity:0.85;}
+.wx-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;}
+.wx-item{font-size:8px;color:rgba(56,189,248,0.45);}
+.wx-item span{color:#7dd3fc;}
+
+/* Sys rows */
+.sys-row{display:flex;justify-content:space-between;align-items:center;font-size:9px;padding:4px 0;border-bottom:1px solid rgba(56,189,248,0.05);}
+.sys-row .sk{color:rgba(56,189,248,0.45);letter-spacing:0.05em;}
+.sys-row .sv{color:#7dd3fc;font-weight:500;}
+
+/* Power bars */
+.pbar{margin-bottom:6px;}
+.pbar-top{display:flex;justify-content:space-between;font-size:8px;color:rgba(56,189,248,0.4);margin-bottom:3px;}
+.pbar-track{height:4px;background:rgba(56,189,248,0.06);border-radius:4px;overflow:hidden;position:relative;}
+.pbar-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,#0ea5e9,#38bdf8,#60efff);
+  transition:width 1.5s cubic-bezier(0.4,0,0.2,1);
+  box-shadow:0 0 8px rgba(56,189,248,0.4);
+  position:relative;
+}
+.pbar-fill::after{
+  content:'';position:absolute;right:0;top:0;bottom:0;width:6px;
+  background:rgba(255,255,255,0.5);border-radius:4px;
+  filter:blur(2px);
+}
+
+/* Event log */
+.ev-item{font-size:8px;color:rgba(56,189,248,0.4);line-height:1.6;padding:3px 0;border-bottom:1px solid rgba(56,189,248,0.05);}
+.ev-ts{color:rgba(56,189,248,0.2);}
+
+/* Quick buttons */
+.qbtn{
+  width:100%;margin-bottom:5px;padding:7px 10px;
+  background:rgba(255,255,255,0.025);
+  border:1px solid rgba(56,189,248,0.1);
+  color:rgba(56,189,248,0.6);
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  cursor:pointer;text-align:left;letter-spacing:0.04em;border-radius:8px;
+  transition:all 0.25s ease;position:relative;overflow:hidden;
+}
+.qbtn::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,#38bdf8,#0ea5e9);
+  transform:scaleY(0);transform-origin:bottom;transition:transform 0.25s ease;
+}
+.qbtn:hover{background:rgba(56,189,248,0.07);color:#38bdf8;border-color:rgba(56,189,248,0.25);padding-left:14px;}
+.qbtn:hover::before{transform:scaleY(1);}
+
+/* ── CENTER ── */
+.center-col{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;min-width:0;
+  background:rgba(255,255,255,0.01);
+}
+
+/* ORB SYSTEM */
+.orb-wrap{
+  position:relative;width:250px;height:250px;flex-shrink:0;
+  margin-top:16px;
+}
+
+/* Outer aurora */
+.aurora{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:250px;height:250px;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 0%,rgba(56,189,248,0.08) 20%,transparent 40%,rgba(96,239,255,0.06) 60%,transparent 80%);
+  animation:auroraRotate 8s linear infinite;
+}
+.aurora2{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:220px;height:220px;border-radius:50%;
+  background:conic-gradient(from 180deg,transparent 0%,rgba(14,165,233,0.1) 25%,transparent 50%,rgba(56,189,248,0.06) 75%,transparent 100%);
+  animation:auroraRotate 12s linear infinite reverse;
+}
+
+/* Rings */
+.ring{
+  position:absolute;border-radius:50%;
+  top:50%;left:50%;
+}
+.ring-1{
+  width:248px;height:248px;
+  border:1px solid transparent;
+  background:linear-gradient(#040f1e,#040f1e) padding-box,
+             linear-gradient(var(--rot,0deg),rgba(56,189,248,0.5),transparent 50%,rgba(56,189,248,0.2)) border-box;
+  transform:translate(-50%,-50%) rotate(0deg);
+  animation:ringRotate1 10s linear infinite;
+}
+.ring-2{
+  width:208px;height:208px;
+  border:1.5px dashed rgba(56,189,248,0.2);
+  transform:translate(-50%,-50%);
+  animation:ringRotate2 14s linear infinite;
+}
+.ring-3{
+  width:170px;height:170px;
+  border:1px solid transparent;
+  background:linear-gradient(#040f1e,#040f1e) padding-box,
+             linear-gradient(var(--rot,90deg),rgba(96,239,255,0.6),transparent 40%,rgba(14,165,233,0.3)) border-box;
+  transform:translate(-50%,-50%);
+  animation:ringRotate1 7s linear infinite reverse;
+}
+.ring-4{
+  width:130px;height:130px;
+  border:1.5px dashed rgba(56,189,248,0.25);
+  transform:translate(-50%,-50%);
+  animation:ringRotate2 9s linear infinite reverse;
+}
+.ring-5{
+  width:98px;height:98px;
+  border:1px solid transparent;
+  background:linear-gradient(#040f1e,#040f1e) padding-box,
+             linear-gradient(var(--rot,45deg),rgba(56,189,248,0.7),transparent 40%,rgba(96,239,255,0.4)) border-box;
+  transform:translate(-50%,-50%);
+  animation:ringRotate1 5s linear infinite;
+}
+
+/* Glow pool */
+.glow-pool{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,rgba(56,189,248,0.12) 0%,rgba(14,165,233,0.05) 40%,transparent 70%);
+  animation:glowBreathe 3s ease-in-out infinite;
+}
+.glow-pool2{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:100px;height:100px;border-radius:50%;
+  background:radial-gradient(circle,rgba(96,239,255,0.2) 0%,transparent 70%);
+  animation:glowBreathe 2s ease-in-out infinite 0.5s;
+}
+
+/* Arc reactor */
+.arc{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:44px;height:44px;border-radius:50%;
+  background:radial-gradient(circle,#ffffff 0%,#e0f2fe 20%,#38bdf8 50%,#0284c7 80%,#0c4a6e 100%);
+  box-shadow:
+    0 0 0 2px rgba(56,189,248,0.3),
+    0 0 15px rgba(56,189,248,0.9),
+    0 0 40px rgba(14,165,233,0.6),
+    0 0 80px rgba(56,189,248,0.3);
+  animation:arcPulse 2.2s ease-in-out infinite;
+}
+.arc-ring1{
+  position:absolute;inset:6px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.6);
+  animation:ringRotate2 2.5s linear infinite;
+}
+.arc-ring2{
+  position:absolute;inset:12px;border-radius:50%;
+  border:1px solid rgba(255,255,255,0.4);
+  animation:ringRotate1 1.8s linear infinite;
+}
+.arc-center{
+  position:absolute;inset:16px;border-radius:50%;
+  background:rgba(255,255,255,0.95);
+  box-shadow:0 0 10px rgba(255,255,255,0.8);
+}
+
+/* Energy nodes on ring-2 */
+.e-node{
+  position:absolute;top:50%;left:50%;
+  width:6px;height:6px;border-radius:50%;
+  background:#38bdf8;
+  box-shadow:0 0 8px #38bdf8,0 0 16px rgba(56,189,248,0.6);
+  animation:nodePulse 2s ease-in-out infinite;
+}
+
+/* Radar */
+.radar-section{flex-shrink:0;padding:8px 0 4px;display:flex;flex-direction:column;align-items:center;}
+.radar-lbl{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:0.2em;color:rgba(56,189,248,0.3);margin-bottom:4px;}
+
+/* Signal */
+.signal-section{flex-shrink:0;padding:0 20px 6px;width:100%;display:flex;flex-direction:column;align-items:center;}
+.signal-lbl{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:0.18em;color:rgba(56,189,248,0.3);margin-bottom:3px;}
+
+/* CHAT */
+.chat-col{
+  flex:1;display:flex;flex-direction:column;
+  min-height:0;width:100%;
+  border-top:1px solid rgba(56,189,248,0.08);
+}
+.chat-msgs{
+  flex:1;overflow-y:auto;padding:10px 16px;
+  display:flex;flex-direction:column;gap:8px;
+  scrollbar-width:thin;scrollbar-color:rgba(56,189,248,0.15) transparent;
+}
+.msg{font-size:11px;line-height:1.65;padding:9px 13px;border-radius:10px;max-width:88%;}
+.msg.jarvis{
+  background:rgba(56,189,248,0.06);
+  border:1px solid rgba(56,189,248,0.15);
+  color:#bae6fd;align-self:flex-start;
+}
+.msg.user{
+  background:rgba(14,165,233,0.1);
+  border:1px solid rgba(14,165,233,0.2);
+  color:#7dd3fc;align-self:flex-end;
+}
+.msg .sndr{
+  font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:0.22em;
+  color:#38bdf8;margin-bottom:3px;opacity:0.7;
+}
+.typing{display:flex;gap:5px;padding:10px 14px;background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.12);align-self:flex-start;border-radius:10px;}
+.typing span{width:5px;height:5px;border-radius:50%;background:#38bdf8;animation:dotBlink 1.4s ease-in-out infinite;}
+.typing span:nth-child(2){animation-delay:0.2s;}
+.typing span:nth-child(3){animation-delay:0.4s;}
+
+.chat-bar{
+  display:flex;gap:8px;padding:10px 14px;
+  border-top:1px solid rgba(56,189,248,0.08);
+  background:rgba(255,255,255,0.015);backdrop-filter:blur(10px);
+  flex-shrink:0;
+}
+#chatIn{
+  flex:1;background:rgba(255,255,255,0.04);
+  border:1px solid rgba(56,189,248,0.15);
+  color:#7dd3fc;padding:9px 14px;
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  outline:none;border-radius:8px;letter-spacing:0.04em;
+  transition:all 0.2s;
+}
+#chatIn:focus{border-color:rgba(56,189,248,0.4);background:rgba(56,189,248,0.04);box-shadow:0 0 0 3px rgba(56,189,248,0.06);}
+#chatIn::placeholder{color:rgba(56,189,248,0.2);}
+#sendBtn{
+  padding:9px 18px;
+  background:linear-gradient(135deg,rgba(14,165,233,0.25),rgba(56,189,248,0.15));
+  border:1px solid rgba(56,189,248,0.3);
+  color:#38bdf8;
+  font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:0.15em;
+  cursor:pointer;border-radius:8px;transition:all 0.2s;white-space:nowrap;
+}
+#sendBtn:hover{background:linear-gradient(135deg,rgba(14,165,233,0.4),rgba(56,189,248,0.3));border-color:#38bdf8;box-shadow:0 0 16px rgba(56,189,248,0.2);}
+#voiceBtn{
+  width:40px;height:40px;border-radius:50%;flex-shrink:0;
+  background:rgba(255,255,255,0.03);
+  border:1.5px solid rgba(56,189,248,0.2);
+  color:#38bdf8;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+}
+#voiceBtn:hover{background:rgba(56,189,248,0.08);border-color:rgba(56,189,248,0.4);}
+#voiceBtn.listening{
+  border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.08);
+  animation:voiceRing 0.7s ease-in-out infinite;
+}
+
+/* Music player (hidden iframe) */
+#yt-player{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+
+/* ── KEYFRAMES ── */
+@keyframes logoShimmer{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+@keyframes logoFadeIn{from{opacity:0;transform:scale(0.9);}to{opacity:1;transform:scale(1);}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes scanMove{0%{background-position:0 0;}100%{background-position:0 8px;}}
+@keyframes auroraRotate{from{transform:translate(-50%,-50%) rotate(0deg);}to{transform:translate(-50%,-50%) rotate(360deg);}}
+@keyframes ringRotate1{from{transform:translate(-50%,-50%) rotate(0deg);}to{transform:translate(-50%,-50%) rotate(360deg);}}
+@keyframes ringRotate2{from{transform:translate(-50%,-50%) rotate(0deg);}to{transform:translate(-50%,-50%) rotate(-360deg);}}
+@keyframes glowBreathe{0%,100%{opacity:0.6;transform:translate(-50%,-50%) scale(1);}50%{opacity:1;transform:translate(-50%,-50%) scale(1.1);}}
+@keyframes arcPulse{
+  0%,100%{box-shadow:0 0 0 2px rgba(56,189,248,0.3),0 0 15px rgba(56,189,248,0.9),0 0 40px rgba(14,165,233,0.6),0 0 80px rgba(56,189,248,0.3);transform:translate(-50%,-50%) scale(1);}
+  50%{box-shadow:0 0 0 3px rgba(56,189,248,0.5),0 0 25px rgba(56,189,248,1),0 0 60px rgba(14,165,233,0.8),0 0 120px rgba(56,189,248,0.4);transform:translate(-50%,-50%) scale(1.08);}
+}
+@keyframes nodePulse{0%,100%{opacity:0.5;transform:scale(0.8);}50%{opacity:1;transform:scale(1.2);}}
+@keyframes dotBlink{0%,80%,100%{opacity:0.1;}40%{opacity:1;}}
+@keyframes voiceRing{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4);}50%{box-shadow:0 0 0 10px rgba(239,68,68,0);}}
+</style>
+</head>
+<body>
+
+<!-- BOOT SCREEN -->
+<div id="boot">
+  <div class="boot-logo">J.A.R.V.I.S</div>
+  <div class="boot-sub">JUST A RATHER VERY INTELLIGENT SYSTEM</div>
+  <div class="boot-bar-wrap"><div class="boot-bar" id="bootBar"></div></div>
+  <div class="boot-status" id="bootStatus">INITIALIZING...</div>
+  <div class="boot-music-note" id="bootMusic"></div>
+</div>
+
+<!-- MUSIC PLAYER - YouTube embed -->
+<div id="music-player" style="position:fixed;bottom:16px;right:16px;z-index:500;display:none;background:rgba(2,12,27,0.97);border:1px solid rgba(56,189,248,0.3);border-radius:12px;overflow:hidden;box-shadow:0 0 40px rgba(56,189,248,0.2);width:300px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(56,189,248,0.06);border-bottom:1px solid rgba(56,189,248,0.1);">
+    <span style="font-family:Orbitron,sans-serif;font-size:7px;letter-spacing:0.22em;color:rgba(56,189,248,0.6);">&#9834; NOW PLAYING</span>
+    <button onclick="stopMusic()" style="background:none;border:none;color:rgba(56,189,248,0.35);cursor:pointer;font-size:15px;line-height:1;padding:0;">&#10005;</button>
+  </div>
+  <div style="padding:8px 12px 4px;">
+    <div style="font-family:Orbitron,sans-serif;font-size:9px;font-weight:700;color:#38bdf8;letter-spacing:0.1em;">AC/DC</div>
+    <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:#7dd3fc;margin-top:2px;">Thunderstruck</div>
+  </div>
+  <iframe id="yt-frame" width="300" height="60" src="about:blank"
+    allow="autoplay; encrypted-media"
+    style="display:block;border:none;">
+  </iframe>
+  <canvas id="music-viz" width="276" height="24" style="display:block;margin:6px 12px 10px;border-radius:4px;"></canvas>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <canvas id="bgCanvas"></canvas>
+  <div class="hc tl"></div><div class="hc tr"></div>
+  <div class="hc bl"></div><div class="hc br"></div>
+
+  <!-- API KEY BANNER -->
+  <div id="key-banner">
+    <span class="kb-label">▸ API KEY</span>
+    <input id="apiIn" type="password" placeholder="Paste Anthropic API key (sk-ant-...) to enable live Claude"/>
+    <button class="kb-btn" onclick="setKey()">ACTIVATE</button>
+    <button id="music-btn" onclick="toggleMusic()">♪ THUNDERSTRUCK</button>
+    <button class="kb-x" onclick="document.getElementById('key-banner').style.display='none'">✕</button>
+  </div>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="tb-logo">J.A.R.V.I.S</div>
+    <div class="tb-clock" id="top-clock">--:--:--</div>
+    <div class="tb-stats">
+      <div class="tb-stat"><span class="tb-stat-lbl">ARC</span><span class="tb-stat-val" id="s-arc">--</span></div>
+      <div class="tb-stat"><span class="tb-stat-lbl">NEURAL</span><span class="tb-stat-val" id="s-neural">--</span></div>
+      <div class="tb-stat"><span class="tb-stat-lbl">TEMP</span><span class="tb-stat-val" id="s-temp">--</span></div>
+      <div class="tb-stat"><span class="tb-stat-lbl">UPTIME</span><span class="tb-stat-val" id="s-uptime">00:00</span></div>
+      <div class="tb-stat"><span class="tb-stat-lbl">THREAT</span><span class="tb-stat-val" id="s-threat" style="color:#34d399">NULL</span></div>
+    </div>
+  </div>
+
+  <div class="main-row">
+    <!-- LEFT -->
+    <div class="side-col left">
+      <div class="panel" style="flex:1;overflow-y:auto;min-height:0;">
+        <div class="panel-title">MARKET INTEL</div>
+        <div id="stocks-wrap"><div style="font-size:9px;color:rgba(56,189,248,0.3);text-align:center;padding:24px 0;letter-spacing:0.1em;">LOADING FEEDS...</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">ATMOSPHERE · ISRAEL</div>
+        <div id="wx-wrap"><div style="font-size:9px;color:rgba(56,189,248,0.3);text-align:center;padding:12px 0;">SCANNING...</div></div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="center-col">
+      <!-- ORB -->
+      <div class="orb-wrap">
+        <div class="aurora"></div>
+        <div class="aurora2"></div>
+        <div class="glow-pool"></div>
+        <div class="glow-pool2"></div>
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="ring ring-4"></div>
+        <div class="ring ring-5"></div>
+        <!-- Energy nodes on ring-2 (r=104) -->
+        <div class="e-node" style="margin-left:-3px;margin-top:-107px;animation-delay:0s;"></div>
+        <div class="e-node" style="margin-left:100px;margin-top:-52px;animation-delay:0.5s;"></div>
+        <div class="e-node" style="margin-left:100px;margin-top:46px;animation-delay:1s;"></div>
+        <div class="e-node" style="margin-left:-3px;margin-top:101px;animation-delay:1.5s;"></div>
+        <div class="e-node" style="margin-left:-107px;margin-top:46px;animation-delay:2s;"></div>
+        <div class="e-node" style="margin-left:-107px;margin-top:-52px;animation-delay:2.5s;"></div>
+        <div class="arc">
+          <div class="arc-ring1"></div>
+          <div class="arc-ring2"></div>
+          <div class="arc-center"></div>
+        </div>
+      </div>
+
+      <!-- RADAR -->
+      <div class="radar-section">
+        <div class="radar-lbl">PROXIMITY SCAN</div>
+        <canvas id="radarC" width="210" height="105"></canvas>
+      </div>
+
+      <!-- SIGNAL -->
+      <div class="signal-section">
+        <div class="signal-lbl">NEURAL SIGNAL</div>
+        <canvas id="sigC" width="250" height="34" style="display:block;margin:0 auto;"></canvas>
+      </div>
+
+      <!-- CHAT -->
+      <div class="chat-col">
+        <div class="chat-msgs" id="chatMsgs"></div>
+        <div class="chat-bar">
+          <button id="voiceBtn" onclick="toggleVoice()" title="Voice input">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
+          <input id="chatIn" type="text" placeholder="SPEAK OR TYPE, SIR..."/>
+          <button id="sendBtn" onclick="send()">TRANSMIT ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="side-col right">
+      <div class="panel">
+        <div class="panel-title">SYSTEM DIAGNOSTICS</div>
+        <div class="sys-row"><span class="sk">CORE TEMP</span><span class="sv" id="d-temp">--°K</span></div>
+        <div class="sys-row"><span class="sk">UPTIME</span><span class="sv" id="d-uptime">00:00:00</span></div>
+        <div class="sys-row"><span class="sk">PROCESSES</span><span class="sv" id="d-proc">--</span></div>
+        <div class="sys-row"><span class="sk">MEMORY</span><span class="sv" id="d-mem">--%</span></div>
+        <div class="sys-row"><span class="sk">INTEGRITY</span><span class="sv" id="d-int" style="color:#34d399">OPTIMAL</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">POWER ALLOCATION</div>
+        <div class="pbar"><div class="pbar-top"><span>REPULSOR</span><span id="p1v">--</span></div><div class="pbar-track"><div class="pbar-fill" id="p1" style="width:0%"></div></div></div>
+        <div class="pbar"><div class="pbar-top"><span>PROPULSION</span><span id="p2v">--</span></div><div class="pbar-track"><div class="pbar-fill" id="p2" style="width:0%"></div></div></div>
+        <div class="pbar"><div class="pbar-top"><span>SENSORS</span><span id="p3v">--</span></div><div class="pbar-track"><div class="pbar-fill" id="p3" style="width:0%"></div></div></div>
+        <div class="pbar"><div class="pbar-top"><span>SHIELDS</span><span id="p4v">--</span></div><div class="pbar-track"><div class="pbar-fill" id="p4" style="width:0%"></div></div></div>
+        <div class="pbar"><div class="pbar-top"><span>COMMS</span><span id="p5v">--</span></div><div class="pbar-track"><div class="pbar-fill" id="p5" style="width:0%"></div></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">QUICK COMMANDS</div>
+        <button class="qbtn" onclick="qcmd('Analyze S&P 500, Google, and Meta current conditions')">▸ MARKET ANALYSIS</button>
+        <button class="qbtn" onclick="qcmd('Weather forecast for Israel today and tomorrow')">▸ WEATHER FORECAST</button>
+        <button class="qbtn" onclick="qcmd('Run full system diagnostic report')">▸ DIAGNOSTICS</button>
+        <button class="qbtn" onclick="qcmd('USD to Israeli Shekel exchange rate analysis')">▸ FOREX BRIEF</button>
+        <button class="qbtn" onclick="qcmd('Daily briefing — markets, weather, key alerts')">▸ DAILY BRIEFING</button>
+      </div>
+      <div class="panel" style="flex:1;overflow-y:auto;min-height:0;">
+        <div class="panel-title">SYSTEM LOG</div>
+        <div id="ev-log"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   BOOT SEQUENCE
+═══════════════════════════════════════ */
+const bootSteps=[
+  'LOADING CORE SYSTEMS...',
+  'INITIALIZING ARC REACTOR...',
+  'CALIBRATING NEURAL INTERFACE...',
+  'CONNECTING MARKET FEEDS...',
+  'SYNCING ATMOSPHERIC SENSORS...',
+  'ESTABLISHING RADAR ARRAY...',
+  'LOADING MUSIC MODULE... ♪',
+  'J.A.R.V.I.S ONLINE',
+];
+let bootPct=0;
+const bootBar=document.getElementById('bootBar');
+const bootStatus=document.getElementById('bootStatus');
+const bootMusic=document.getElementById('bootMusic');
+
+function runBoot(){
+  let step=0;
+  const iv=setInterval(()=>{
+    bootPct+=Math.random()*18+4;
+    if(bootPct>100)bootPct=100;
+    bootBar.style.width=bootPct+'%';
+    if(step<bootSteps.length){
+      bootStatus.textContent=bootSteps[step];
+      step++;
+    }
+    if(bootPct>=100){
+      clearInterval(iv);
+      bootStatus.textContent='ALL SYSTEMS NOMINAL';
+      bootMusic.textContent='♪ AC/DC — THUNDERSTRUCK — LOADING...';
+      setTimeout(endBoot,700);
+    }
+  },120);
+}
+
+function endBoot(){
+  const boot=document.getElementById('boot');
+  boot.style.opacity='0';
+  setTimeout(()=>{
+    boot.style.display='none';
+    document.getElementById('app').classList.add('visible');
+    initApp();
+    showMusicPrompt();
+  },800);
+}
+
+runBoot();
+
+/* ═══════════════════════════════════════
+   MUSIC — YouTube iframe (works when hosted)
+═══════════════════════════════════════ */
+let musicOn = false, vizInterval = null;
+
+function showMusicPrompt(){
+  const overlay = document.createElement('div');
+  overlay.id = 'music-prompt';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:8888;display:flex;align-items:center;justify-content:center;background:rgba(2,12,27,0.9);backdrop-filter:blur(12px);cursor:pointer;';
+  overlay.innerHTML = `
+    <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:22px;pointer-events:none;user-select:none;">
+      <div style="font-family:Orbitron,sans-serif;font-size:10px;letter-spacing:0.35em;color:rgba(56,189,248,0.45);">AUDIO SYSTEM READY</div>
+      <div id="play-circle" style="width:100px;height:100px;border-radius:50%;border:2px solid rgba(56,189,248,0.55);display:flex;align-items:center;justify-content:center;font-size:40px;color:#38bdf8;background:rgba(56,189,248,0.07);">&#9654;</div>
+      <div style="font-family:Orbitron,sans-serif;font-size:19px;font-weight:900;letter-spacing:0.25em;color:#38bdf8;text-shadow:0 0 28px rgba(56,189,248,0.7);">CLICK TO ENGAGE</div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:11px;color:rgba(56,189,248,0.5);letter-spacing:0.1em;">AC/DC &#8212; THUNDERSTRUCK</div>
+    </div>`;
+  const s = document.createElement('style');
+  s.textContent = '#play-circle{animation:pp 1.4s ease-in-out infinite;}@keyframes pp{0%,100%{transform:scale(1);box-shadow:0 0 30px rgba(56,189,248,0.25);}50%{transform:scale(1.1);box-shadow:0 0 65px rgba(56,189,248,0.6);}}';
+  document.head.appendChild(s);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.4s';
+    setTimeout(() => overlay.remove(), 450);
+    startMusic();
+  });
+}
+
+function startMusic(){
+  const frame = document.getElementById('yt-frame');
+  /* autoplay=1 works when triggered by user gesture on a hosted page */
+  frame.src = 'https://www.youtube.com/embed/v2AC41dglnM?autoplay=1&loop=1&playlist=v2AC41dglnM&controls=1&rel=0&modestbranding=1';
+  document.getElementById('music-player').style.display = 'block';
+  musicOn = true;
+  updateMusicBtn();
+  addLog('&#9834; AC/DC &#8212; Thunderstruck &#8212; PLAYING');
+  startViz();
+}
+
+function stopMusic(){
+  const frame = document.getElementById('yt-frame');
+  frame.src = 'about:blank';
+  document.getElementById('music-player').style.display = 'none';
+  musicOn = false;
+  if(vizInterval){ clearInterval(vizInterval); vizInterval = null; }
+  updateMusicBtn();
+  addLog('Audio: stopped');
+}
+
+function toggleMusic(){
+  if(musicOn) stopMusic();
+  else startMusic();
+}
+
+function updateMusicBtn(){
+  const btn = document.getElementById('music-btn');
+  if(btn) btn.innerHTML = musicOn ? '&#9632; STOP' : '&#9834; THUNDERSTRUCK';
+}
+
+function startViz(){
+  const canvas = document.getElementById('music-viz');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  let ph = 0;
+  vizInterval = setInterval(() => {
+    ctx.clearRect(0,0,W,H);
+    ph += 0.2;
+    const grd = ctx.createLinearGradient(0,0,W,0);
+    grd.addColorStop(0,'rgba(14,165,233,0.4)');
+    grd.addColorStop(0.5,'rgba(56,189,248,0.9)');
+    grd.addColorStop(1,'rgba(96,239,255,0.5)');
+    ctx.strokeStyle = grd; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for(let x=0;x<W;x++){
+      const y = H/2 + Math.sin(x*0.1+ph)*6 + Math.sin(x*0.23-ph*1.4)*3.5 + Math.sin(x*0.05+ph*0.6)*5;
+      x===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }, 40);
+}
+
+/* ═══════════════════════════════════════
+   APP STATE
+═══════════════════════════════════════ */
+let API_KEY='',convoHistory=[],upSec=0,isProc=false,recognition=null,isListening=false;
+
+const FALLBACKS=[
+  "All systems nominal, Sir. Arc reactor stable — though my conversational cortex requires an API key in the banner above for full operation.",
+  "A fine query. I'm running on local cognition only at present. The banner above will unlock my complete analytical suite, Sir.",
+  "I've processed that, Sir, though with limited faculties. Insert your Anthropic API key to experience JARVIS at full capacity.",
+  "Diagnostics show external intelligence link: offline. Local wit: fully operational. API key required for complete service, Sir.",
+  "My predictive models are engaged but the language cortex needs an API key. The banner above handles that, Sir.",
+];
+
+const SYS=`You are J.A.R.V.I.S (Just A Rather Very Intelligent System), Tony Stark's AI. Precise, slightly formal, dry wit. Address the user as "Sir" or "Ma'am". Keep responses under 100 words unless depth is required. Occasional technical flair. Never break character. For finance, give real analysis. For Israel weather, note Mediterranean climate.`;
+
+function setKey(){
+  const k=document.getElementById('apiIn').value.trim();
+  if(!k.startsWith('sk-ant')){document.getElementById('apiIn').style.borderColor='#ef4444';return;}
+  API_KEY=k;
+  document.getElementById('key-banner').style.display='none';
+  addLog('Anthropic neural link: ACTIVE');
+  typeMsg("Neural link engaged, Sir. Full conversational intelligence online. Ready to assist.");
+}
+document.getElementById('apiIn').addEventListener('keydown',e=>{if(e.key==='Enter')setKey();});
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+function initApp(){
+  initBgCanvas();
+  startClock();
+  startStats();
+  drawRadar();
+  drawSignal();
+  fetchStocks();
+  fetchWeather();
+  setInterval(fetchStocks,60000);
+  setInterval(fetchWeather,300000);
+  addLog('JARVIS boot sequence complete');
+  addLog('Neural link established');
+  addLog('Market data feeds active');
+  setTimeout(()=>typeMsg("Good day. J.A.R.V.I.S online — arc reactor at 98.3%, all subsystems nominal. Thunderstruck queued. How may I assist, Sir?"),1000);
+}
+
+/* ═══════════════════════════════════════
+   BG CANVAS — mesh + floating orbs
+═══════════════════════════════════════ */
+function initBgCanvas(){
+  const c=document.getElementById('bgCanvas');
+  const ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+
+  const pts=[];
+  for(let i=0;i<70;i++) pts.push({
+    x:Math.random()*c.width,y:Math.random()*c.height,
+    vx:(Math.random()-0.5)*0.25,vy:(Math.random()-0.5)*0.25,
+    r:Math.random()*1.8+0.4,a:Math.random()*0.5+0.1
+  });
+
+  // Floating light orbs
+  const orbs=[];
+  for(let i=0;i<5;i++) orbs.push({
+    x:Math.random()*c.width,y:Math.random()*c.height,
+    vx:(Math.random()-0.5)*0.15,vy:(Math.random()-0.5)*0.15,
+    r:80+Math.random()*120,a:0.03+Math.random()*0.04
+  });
+
+  function frame(){
+    ctx.clearRect(0,0,c.width,c.height);
+
+    // Orbs
+    orbs.forEach(o=>{
+      o.x+=o.vx;o.y+=o.vy;
+      if(o.x<-o.r)o.x=c.width+o.r;if(o.x>c.width+o.r)o.x=-o.r;
+      if(o.y<-o.r)o.y=c.height+o.r;if(o.y>c.height+o.r)o.y=-o.r;
+      const g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r);
+      g.addColorStop(0,`rgba(56,189,248,${o.a})`);
+      g.addColorStop(1,'rgba(56,189,248,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);ctx.fill();
+    });
+
+    // Particles + mesh
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;
+      if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(56,189,248,${p.a})`;ctx.fill();
+    });
+    pts.forEach((p,i)=>pts.slice(i+1).forEach(q=>{
+      const d=Math.hypot(p.x-q.x,p.y-q.y);
+      if(d<130){
+        ctx.strokeStyle=`rgba(56,189,248,${0.05*(1-d/130)})`;
+        ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+      }
+    }));
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ═══════════════════════════════════════
+   CLOCK & STATS
+═══════════════════════════════════════ */
+function startClock(){
+  function tick(){
+    const n=new Date();
+    document.getElementById('top-clock').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+    upSec++;
+    const h=Math.floor(upSec/3600),m=Math.floor((upSec%3600)/60),s=upSec%60;
+    document.getElementById('d-uptime').textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;
+    document.getElementById('s-uptime').textContent=`${pad(h)}:${pad(m)}`;
+  }
+  tick();setInterval(tick,1000);
+}
+function pad(n){return String(n).padStart(2,'0');}
+
+function startStats(){
+  function upd(){
+    const arc=(96+Math.random()*4).toFixed(1)+'%';
+    const neural=(88+Math.random()*12).toFixed(0)+'Hz';
+    const temp=(3800+Math.random()*200).toFixed(0)+'°K';
+    ['s-arc','d-temp'].forEach(()=>{});
+    document.getElementById('s-arc').textContent=arc;
+    document.getElementById('s-neural').textContent=neural;
+    document.getElementById('s-temp').textContent=temp;
+    document.getElementById('d-temp').textContent=temp;
+    document.getElementById('d-proc').textContent=120+Math.floor(Math.random()*40);
+    document.getElementById('d-mem').textContent=(68+Math.random()*15).toFixed(1)+'%';
+    [1,2,3,4,5].forEach(i=>{
+      const v=50+Math.random()*40;
+      const el=document.getElementById('p'+i);if(el)el.style.width=v+'%';
+      const vel=document.getElementById('p'+i+'v');if(vel)vel.textContent=v.toFixed(0)+'%';
+    });
+    if(upSec%13===0)addLog(['Radar sweep nominal','Subsystems synced','Threat scan: CLEAR','Memory optimized','Sensor array active'][Math.floor(Math.random()*5)]);
+  }
+  upd();setInterval(upd,1300);
+}
+
+/* ═══════════════════════════════════════
+   RADAR
+═══════════════════════════════════════ */
+const radarC=document.getElementById('radarC');
+const rctx=radarC.getContext('2d');
+let sweepA=Math.PI,blips=[];
+
+function drawRadar(){
+  rctx.clearRect(0,0,210,105);
+  const CX=105,CY=105,R=98;
+  rctx.strokeStyle='rgba(56,189,248,0.12)';rctx.lineWidth=0.5;
+  for(let r=25;r<=R;r+=25){rctx.beginPath();rctx.arc(CX,CY,r,Math.PI,0);rctx.stroke();}
+  for(let a=0;a<=180;a+=30){const rad=a*Math.PI/180;rctx.beginPath();rctx.moveTo(CX,CY);rctx.lineTo(CX+R*Math.cos(rad+Math.PI),CY+R*Math.sin(rad+Math.PI));rctx.stroke();}
+  rctx.beginPath();rctx.moveTo(7,CY);rctx.lineTo(203,CY);rctx.stroke();
+
+  for(let i=0;i<60;i++){
+    const a=sweepA-(i/60)*(Math.PI/2),a2=sweepA-((i+1)/60)*(Math.PI/2);
+    rctx.beginPath();rctx.moveTo(CX,CY);rctx.arc(CX,CY,R,a,a2);rctx.closePath();
+    rctx.fillStyle=`rgba(56,189,248,${0.06*(1-i/60)})`;rctx.fill();
+  }
+  const grd=rctx.createLinearGradient(CX,CY,CX+R*Math.cos(sweepA),CY+R*Math.sin(sweepA));
+  grd.addColorStop(0,'rgba(56,189,248,0.1)');grd.addColorStop(1,'rgba(96,239,255,0.9)');
+  rctx.strokeStyle=grd;rctx.lineWidth=2;
+  rctx.beginPath();rctx.moveTo(CX,CY);rctx.lineTo(CX+R*Math.cos(sweepA),CY+R*Math.sin(sweepA));rctx.stroke();
+
+  blips.forEach(b=>{
+    const age=(Date.now()-b.born)/2800,alpha=Math.max(0,1-age);
+    rctx.beginPath();rctx.arc(b.x,b.y,2.5,0,Math.PI*2);
+    rctx.fillStyle=`rgba(96,239,255,${alpha})`;rctx.fill();
+    rctx.strokeStyle=`rgba(56,189,248,${alpha*0.3})`;rctx.lineWidth=1;
+    rctx.beginPath();rctx.arc(b.x,b.y,6,0,Math.PI*2);rctx.stroke();
+  });
+  blips=blips.filter(b=>Date.now()-b.born<3000);
+  sweepA+=0.02;
+  if(sweepA>0){
+    sweepA=Math.PI;
+    if(Math.random()>0.45){const ang=Math.PI+Math.random()*Math.PI,d=18+Math.random()*(R-18);blips.push({x:CX+d*Math.cos(ang),y:CY+d*Math.sin(ang),born:Date.now()});}
+  }
+  requestAnimationFrame(drawRadar);
+}
+
+/* ═══════════════════════════════════════
+   SIGNAL
+═══════════════════════════════════════ */
+const sigC=document.getElementById('sigC');
+const sctx=sigC.getContext('2d');
+let sigData=new Array(125).fill(17);
+function drawSignal(){
+  sctx.clearRect(0,0,250,34);
+  sigData.shift();sigData.push(3+Math.random()*24);
+  const grd=sctx.createLinearGradient(0,0,250,0);
+  grd.addColorStop(0,'rgba(14,165,233,0.2)');
+  grd.addColorStop(0.5,'rgba(56,189,248,0.8)');
+  grd.addColorStop(1,'rgba(96,239,255,0.5)');
+  sctx.strokeStyle=grd;sctx.lineWidth=1.5;
+  sctx.beginPath();sigData.forEach((v,i)=>{i===0?sctx.moveTo(0,34-v):sctx.lineTo(i*2,34-v);});sctx.stroke();
+}
+setInterval(drawSignal,55);
+
+/* ═══════════════════════════════════════
+   STOCKS
+═══════════════════════════════════════ */
+const STOCKS=[
+  {sym:'^GSPC',short:'S&P 500'},
+  {sym:'USDILS=X',short:'USD/ILS'},
+  {sym:'GOOGL',short:'GOOGL'},
+  {sym:'META',short:'META'},
+];
+let stockData={};
+
+async function fetchStocks(){
+  for(const s of STOCKS){
+    try{
+      const url=`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s.sym)}?interval=1d&range=5d`;
+      const r=await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+      const d=await r.json();
+      const meta=d.chart.result[0].meta;
+      const closes=d.chart.result[0].indicators.quote[0].close.filter(v=>v!=null);
+      const price=meta.regularMarketPrice||closes[closes.length-1];
+      const prev=meta.previousClose||closes[closes.length-2]||price;
+      stockData[s.sym]={price,chg:price-prev,chgPct:(price-prev)/prev*100,closes,short:s.short};
+    }catch(e){stockData[s.sym]={price:null,chg:0,chgPct:0,closes:[],short:s.short,err:true};}
+  }
+  renderStocks();
+  addLog('Market data refreshed');
+}
+
+function renderStocks(){
+  const wrap=document.getElementById('stocks-wrap');wrap.innerHTML='';
+  STOCKS.forEach(s=>{
+    const d=stockData[s.sym];if(!d)return;
+    const up=d.chg>=0;
+    const px=d.price?(s.sym==='USDILS=X'?'₪'+d.price.toFixed(4):'$'+d.price.toFixed(2)):'N/A';
+    const chgStr=d.price?`${up?'+':''}${d.chg.toFixed(2)} (${up?'+':''}${d.chgPct.toFixed(2)}%)`:'--';
+    const pred=getPred(d);
+    const div=document.createElement('div');div.className='stock-card';
+    const cid='mc_'+s.sym.replace(/[^a-zA-Z0-9]/g,'_');
+    div.innerHTML=`
+      <div class="sc-top"><span class="sc-sym">${d.short}</span><span class="sc-price">${px}</span></div>
+      <div class="sc-mid">
+        <span class="sc-chg ${up?'up':'down'}">${chgStr}</span>
+        <span class="sc-pred">${pred.icon} ${pred.text}</span>
+      </div>
+      <canvas class="mini-chart" id="${cid}" height="30"></canvas>`;
+    wrap.appendChild(div);
+    renderMiniChart(cid,d.closes,up);
+  });
+}
+
+function getPred(d){
+  if(!d.price||d.closes.length<2)return{icon:'◆',text:'NO DATA'};
+  const m=d.chgPct;
+  if(m>2)return{icon:'▲▲',text:'STRONG BUY'};
+  if(m>0.6)return{icon:'▲',text:'BULLISH'};
+  if(m>-0.6)return{icon:'◆',text:'NEUTRAL'};
+  if(m>-2)return{icon:'▼',text:'BEARISH'};
+  return{icon:'▼▼',text:'SELL SIGNAL'};
+}
+
+function renderMiniChart(id,closes,up){
+  const el=document.getElementById(id);if(!el||closes.length<2)return;
+  const ctx=el.getContext('2d');
+  const W=el.offsetWidth||190,H=30;el.width=W;ctx.clearRect(0,0,W,H);
+  const mn=Math.min(...closes),mx=Math.max(...closes),rng=mx-mn||1;
+  const pts=closes.map((v,i)=>({x:i/(closes.length-1)*W,y:H-((v-mn)/rng)*(H-5)-2}));
+  const grd=ctx.createLinearGradient(0,0,W,0);
+  if(up){grd.addColorStop(0,'rgba(52,211,153,0.4)');grd.addColorStop(1,'rgba(52,211,153,0.9)');}
+  else{grd.addColorStop(0,'rgba(248,113,113,0.4)');grd.addColorStop(1,'rgba(248,113,113,0.9)');}
+  ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle=grd;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+  ctx.fillStyle=up?'rgba(52,211,153,0.06)':'rgba(248,113,113,0.06)';ctx.fill();
+}
+
+/* ═══════════════════════════════════════
+   WEATHER
+═══════════════════════════════════════ */
+async function fetchWeather(){
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=31.7683&longitude=35.2137&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Asia/Jerusalem&forecast_days=1');
+    const d=await r.json();
+    const c=d.current,dl=d.daily;
+    document.getElementById('wx-wrap').innerHTML=`
+      <div class="wx-card">
+        <div class="wx-main">
+          <div>
+            <div class="wx-loc">JERUSALEM · ISRAEL</div>
+            <div class="wx-temp">${c.temperature_2m.toFixed(1)}°C</div>
+            <div class="wx-desc">${wmoDesc(c.weather_code).toUpperCase()}</div>
+          </div>
+          <div class="wx-icon">${wmoIcon(c.weather_code)}</div>
+        </div>
+        <div class="wx-grid">
+          <div class="wx-item">HUMIDITY <span>${c.relative_humidity_2m}%</span></div>
+          <div class="wx-item">WIND <span>${c.wind_speed_10m} km/h</span></div>
+          <div class="wx-item">HIGH <span>${dl.temperature_2m_max[0].toFixed(1)}°C</span></div>
+          <div class="wx-item">LOW <span>${dl.temperature_2m_min[0].toFixed(1)}°C</span></div>
+        </div>
+      </div>`;
+    addLog('Atmospheric scan complete');
+  }catch(e){
+    document.getElementById('wx-wrap').innerHTML='<div style="font-size:9px;color:rgba(248,113,113,0.5);padding:8px;">WEATHER FEED OFFLINE</div>';
+  }
+}
+function wmoDesc(c){const m={0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',61:'Light rain',63:'Moderate rain',65:'Heavy rain',71:'Slight snow',80:'Rain showers',95:'Thunderstorm'};return m[c]||'Variable';}
+function wmoIcon(c){if(c===0)return'☀';if(c<=2)return'🌤';if(c<=3)return'☁';if(c<=48)return'🌫';if(c<=65)return'🌧';if(c<=75)return'🌨';return'⛈';}
+
+/* ═══════════════════════════════════════
+   EVENT LOG
+═══════════════════════════════════════ */
+function addLog(msg){
+  const log=document.getElementById('ev-log');
+  const n=new Date();
+  const ts=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  const el=document.createElement('div');el.className='ev-item';
+  el.innerHTML=`<span class="ev-ts">${ts}</span> ${msg}`;
+  log.insertBefore(el,log.firstChild);
+  if(log.children.length>10)log.lastChild.remove();
+}
+
+/* ═══════════════════════════════════════
+   VOICE
+═══════════════════════════════════════ */
+function initVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return null;
+  const r=new SR();r.continuous=false;r.interimResults=false;r.lang='en-US';
+  r.onresult=e=>{document.getElementById('chatIn').value=e.results[0][0].transcript;stopListening();setTimeout(send,150);};
+  r.onerror=()=>stopListening();r.onend=()=>{if(isListening)stopListening();};
+  return r;
+}
+function toggleVoice(){
+  if(!recognition)recognition=initVoice();
+  if(!recognition){alert('Voice not supported. Use Chrome/Edge.');return;}
+  isListening?stopListening():startListening();
+}
+function startListening(){isListening=true;document.getElementById('voiceBtn').classList.add('listening');recognition.start();addLog('Voice input: ACTIVE');}
+function stopListening(){isListening=false;document.getElementById('voiceBtn').classList.remove('listening');try{recognition.stop();}catch(e){}}
+
+/* ═══════════════════════════════════════
+   CHAT
+═══════════════════════════════════════ */
+function typeMsg(text){
+  const msgs=document.getElementById('chatMsgs');
+  const dots=document.createElement('div');dots.className='typing';
+  dots.innerHTML='<span></span><span></span><span></span>';
+  msgs.appendChild(dots);msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(()=>{
+    dots.remove();
+    const d=document.createElement('div');d.className='msg jarvis';
+    d.innerHTML=`<div class="sndr">J.A.R.V.I.S</div>`;
+    msgs.appendChild(d);let i=0;
+    const iv=setInterval(()=>{
+      if(i<text.length){d.innerHTML=`<div class="sndr">J.A.R.V.I.S</div>${text.slice(0,++i)}<span style="opacity:0.3;color:#38bdf8">█</span>`;msgs.scrollTop=msgs.scrollHeight;}
+      else{d.innerHTML=`<div class="sndr">J.A.R.V.I.S</div>${text}`;clearInterval(iv);}
+    },14);
+  },500+Math.random()*400);
+}
+
+async function send(){
+  if(isProc)return;
+  const input=document.getElementById('chatIn');
+  const text=input.value.trim();if(!text)return;
+  input.value='';
+  const msgs=document.getElementById('chatMsgs');
+  const ud=document.createElement('div');ud.className='msg user';ud.textContent=text;
+  msgs.appendChild(ud);msgs.scrollTop=msgs.scrollHeight;
+  addLog('Query received');isProc=true;
+  convoHistory.push({role:'user',content:text});
+
+  if(!API_KEY){
+    const reply=FALLBACKS[Math.floor(Math.random()*FALLBACKS.length)];
+    setTimeout(()=>{typeMsg(reply);convoHistory.pop();isProc=false;},500+Math.random()*400);
+    return;
+  }
+
+  const dots=document.createElement('div');dots.className='typing';
+  dots.innerHTML='<span></span><span></span><span></span>';
+  msgs.appendChild(dots);msgs.scrollTop=msgs.scrollHeight;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,system:SYS,messages:convoHistory})
+    });
+    dots.remove();
+    if(!resp.ok){const err=await resp.json().catch(()=>({}));typeMsg(`Link error ${resp.status}, Sir.${err.error?.message?' '+err.error.message.slice(0,50):''}`);convoHistory.pop();isProc=false;return;}
+    const data=await resp.json();
+    const reply=data.content?.[0]?.text||'Anomaly detected, Sir.';
+    convoHistory.push({role:'assistant',content:reply});
+    const d=document.createElement('div');d.className='msg jarvis';d.innerHTML=`<div class="sndr">J.A.R.V.I.S</div>`;
+    msgs.appendChild(d);let i=0;
+    const iv=setInterval(()=>{
+      if(i<reply.length){d.innerHTML=`<div class="sndr">J.A.R.V.I.S</div>${reply.slice(0,++i)}<span style="opacity:0.3;color:#38bdf8">█</span>`;msgs.scrollTop=msgs.scrollHeight;}
+      else{d.innerHTML=`<div class="sndr">J.A.R.V.I.S</div>${reply}`;clearInterval(iv);}
+    },14);
+    addLog('Response transmitted');
+    if(convoHistory.length>40)convoHistory=convoHistory.slice(-30);
+  }catch(e){
+    dots.remove();typeMsg(`Comms offline, Sir. ${e.message||'Unknown error'}.`);convoHistory.pop();
+  }
+  isProc=false;
+}
+
+function qcmd(t){document.getElementById('chatIn').value=t;send();}
+document.getElementById('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+</script>
+</body>
+</html>
